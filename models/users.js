@@ -5,7 +5,7 @@ var userSchema = new db.Schema({
     fullName:       { type: String, required: true },
     passwordHash:   String,
     userDevices:    [ String ],
-    activityDates:  [ Date ]
+    lastAccess:  [ Date ]
 });
 
 var User = db.model("User", userSchema);
