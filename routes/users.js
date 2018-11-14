@@ -58,55 +58,126 @@ router.post('/register', function(req, res, next) {
         });
     });    
 });
-
+//Following function not being used but I am scared to remove it :)
 router.get("/activity" , function(req, res) {
-   // Check for authentication token in x-auth header
-   if (!req.headers["x-auth"]) {
-      return res.status(401).json({success: false, message: "No authentication token"});
-   }
-   
-   var authToken = req.headers["x-auth"];
-   
-   try {
-      var decodedToken = jwt.decode(authToken, secret);
-      var userStatus = {};
-      
-      User.findOne({email: decodedToken.email}, function(err, user) {
-         if(err) {
-            return res.status(200).json({success: false, message: "User does not exist."});
-         }
-         else {
+    // Check for authentication token in x-auth header
+    if (!req.headers["x-auth"]) {
+       return res.status(401).json({success: false, message: "No authentication token"});
+    }
+    
+    var authToken = req.headers["x-auth"];
+    
+    try {
+       var decodedToken = jwt.decode(authToken, secret);
+       var userStatus = {};
+       
+       User.findOne({email: decodedToken.email}, function(err, user) {
+          if(err) {
+             return res.status(200).json({success: false, message: "User does not exist."});
+          }
+          else {
             userStatus['success'] = true;
             userStatus['email'] = user.email;
             userStatus['fullName'] = user.fullName;
-            userStatus['lastAccess'] = user.lastAccess;
             userStatus['device'] = user.userDevices;
-            
-            
-            // Find devices based on decoded token
-		      Device.find({ userEmail : decodedToken.email}, function(err, devices) {
-			      if (!err) {
-			         // Construct device list
-			         var deviceList = []; 
-			         for (device of devices) {
-				         deviceList.push({ 
-				               deviceId: device.deviceId,
-				               apikey: device.apikey,
-				         });
-			         }
-			         userStatus['devices'] = deviceList;
-			      }
-                  return res.status(200).json(userStatus);
-                           
-              });
-         }
-   });
+            userStatus['activity'] = user.userDevices.deviceActivities;
+             
+             // Find devices based on decoded token
+            //  Device.find({ userEmail : decodedToken.email}, function(err, devices) {
+            //     if (!err) {
+            //        // Construct device list
+            //        var deviceList = []; 
+            //        for (device of devices) {
+            //            deviceList.push({ 
+            //                  deviceId: device.deviceId,
+            //                  apikey: device.apikey,
+            //            });
+            //        }
+            //        userStatus['devices'] = deviceList;
+            //     }
+                var email = user.email;
+                var deviceList = GetDeviceList(email);
+                userStatus['devices'] = deviceList;
+                userStatus['activities'] = GetActivities(deviceList);
+              
+                // Activity.find({ deviceId : user.userDevices }, function(err, activities) {
+  
+                //     if (!err) {
+        
+                //       var activityList = [];
+                //       for (activity of activities) {
+                //         activityList.push({
+                //           speed: activity.speed,
+                //           latitude: activity.latitude,
+                //           longitude: activity.longitude,
+                //           exposure: activity.exposure,
+                //           deviceId: activity.deviceId
+                //         });
+                //       }
+                //       userStatus['activities'] = activityList;
+                //     }
+        
+                //     return res.status(200).json(userStatus); 
+                //  });
+                return res.status(200).json(userStatus);
+            //});
+  
+           
+
+           //return res.status(200).json(userStatus);
+           
+          }
+       });
+    }
+    catch (ex) {
+       return res.status(401).json({success: false, message: "Invalid authentication token."});
+    }
+    
+  });
+
+function GetDeviceList(userEmail) {
+    var deviceList = [];
+
+    Device.find({ userEmail : userEmail}, function(err, devices) {
+    if (!err) {
+        // Construct device list
+        var deviceList = []; 
+        for (device of devices) {
+            deviceList.push({ 
+                    deviceId: device.deviceId,
+                    apikey: device.apikey,
+            });
+        }
+    }
+    
+    });
+    return deviceList;
 }
-   catch (ex) {
-      return res.status(401).json({success: false, message: "Invalid authentication token."});
-   }
-   
-});
+
+function GetActivities(deviceList) {
+    var activityList = [];
+    for (var device of deviceList) {
+        Activity.find({ deviceId : "123456" }, function(err, activities) {
+
+            if (!err) {
+
+            
+            for (activity of activities) {
+                activityList.push({
+                speed: activity.speed,
+                latitude: activity.latitude,
+                longitude: activity.longitude,
+                exposure: activity.exposure,
+                deviceId: activity.deviceId
+                });
+            }
+            
+            }
+
+        });
+    }
+    return activityList;
+}
 
 router.get("/account" , function(req, res) {
     // Check for authentication token in x-auth header

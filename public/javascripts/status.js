@@ -8,13 +8,31 @@ function sendReqForAccountInfo() {
       error: accountInfoError
    });
 }
-
 function sendReqForActivityInfo() {
     $.ajax({
         url: '/users/account',
         type: 'GET',
         headers: { 'x-auth': window.localStorage.getItem("authToken") },
         responseType: 'json',
+        success: findActivityWithDevices,
+        error: activityError
+    });
+}
+
+function findActivityWithDevices(data, textStatus, jqXHR) {
+    var deviceIdList = [];
+    for (var device of data.devices) {
+        deviceIdList.push(device.deviceId);
+    }   
+    console.log(deviceIdList);
+
+    $.ajax({
+        url: '/activity/info',
+        type: 'POST',
+        responseType: 'json',
+        data: {
+            deviceIdList
+        },
         success: showActivityData,
         error: activityError
     });
@@ -51,8 +69,9 @@ function activityError(jqXHR, status, errorThrown) {
 }
 
 
-   function accountInfoSuccess(data, textSatus, jqXHR) {
-   $("#email").html(data.email);
+function accountInfoSuccess(data, textSatus, jqXHR) {
+   console.log(data);
+    $("#email").html(data.email);
    $("#fullName").html(data.fullName);
    $("#device").html(data.device);
    $("#lastAccess").html(data.lastAccess);
@@ -68,18 +87,15 @@ function activityError(jqXHR, status, errorThrown) {
 
 function showActivityData( data, textStatus, jqXHR) {
 
-    console.log("show function");
+    console.log(data);
 
-    if (!data.activities) {
-        return;
-    }
 
     for (var activity of data.activities) {
             console.log("inner loop");
-        $("#activity").after("<li class='collection-item'>Device ID: " + 
-        activity.deviceId + "speed: " + activity.speed + "/n" +
-        "latitude: " + activity.latitude + "/n" + "longitude: " + activity.longitude + "/n" +
-        "exposure: " + activity.exposure + "/n" + "</li>");
+        $("#activityButton").after("<li class='collection-item'>Device ID: " + 
+        activity["deviceId"] +"<br/>" + "speed: " + activity["speed"] + "<br/>" +
+        "latitude: " + activity["latitude"] + "<br/>" + "longitude: "  + "<br/>" +
+        "exposure: " + activity["exposure"] + "<br/>" + "</li>");
 
     }
     
@@ -97,6 +113,17 @@ function accountInfoError(jqXHR, textStatus, errorThrown) {
      $("#error").html("Error: " + status.message);
      $("#error").show();
    } 
+}
+
+function searchActivity() {
+    $.ajax({
+        url: '/activity/info',
+        type: 'POST',
+        data: { deviceId: $("#activitySearch").val() },
+        responseType: 'json',
+        success: showActivityData,
+        error: activityError
+    });
 }
 
 // Registers the specified device with the server.
@@ -150,6 +177,6 @@ $(function() {
    $("#addDevice").click(showAddDeviceForm);
    $("#registerDevice").click(registerDevice);   
    $("#cancel").click(hideAddDeviceForm);   
- $("#activity").click(sendReqForActivityInfo); 
+   $("#activityButton").click(searchActivity); 
    //new-------------click-call function --photon hit
 });

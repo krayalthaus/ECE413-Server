@@ -4,7 +4,7 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var bodyParser = require('body-parser');
-
+//Creating the necessary routes and including the necessary packages
 var usersRouter = require('./routes/users');
 var activityRouter = require('./routes/activity');
 var deviceRouter = require('./routes/device');
